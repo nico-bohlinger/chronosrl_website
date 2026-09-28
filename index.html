@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChronoSRL: Temporal Geometry for Self-Supervised RL</title>
+<meta name="description" content="ChronoSRL trains the distances of a self-supervised RL critic to match the time the agent needs to reach a goal. Live policies, interactive results, code.">
+<meta name="author" content="Nico Bohlinger, Jan Peters">
+<meta property="og:title" content="ChronoSRL: Temporal Geometry for Self-Supervised Reinforcement Learning">
+<meta property="og:description" content="A goal that is close in space can be far away in time. Play with ChronoSRL policies in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://nico-bohlinger.github.io/chronosrl_website/">
+<meta name="theme-color" content="#fcfcfb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141413" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='none' stroke='%2311917e' stroke-width='3'/%3E%3Cpath d='M16 7v9l6 4' fill='none' stroke='%2311917e' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/site.css">
+<script type="importmap">{"imports": {"three": "./vendor/three/three.module.min.js"}}</script>
+<link rel="modulepreload" href="js/main.js">
+<link rel="modulepreload" href="js/util.js">
+<link rel="modulepreload" href="js/sim/loader.js">
+<link rel="modulepreload" href="js/sim/policy.js">
+<link rel="modulepreload" href="js/pin.js">
+<link rel="modulepreload" href="vendor/three/three.module.min.js">
+<link rel="modulepreload" href="vendor/three/three.core.min.js">
+<link rel="modulepreload" href="vendor/three/OrbitControls.js">
+<link rel="modulepreload" href="js/playground/playground.js">
+<link rel="modulepreload" href="js/playground/maze.js">
+<link rel="modulepreload" href="js/hud.js">
+<link rel="modulepreload" href="js/sim/envs.js">
+<link rel="modulepreload" href="js/sim/brax.js">
+<link rel="modulepreload" href="js/playground/scene.js">
+<link rel="modulepreload" href="js/view.js">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <h1><span class="brand">ChronoSRL</span><span class="subtitle">Temporal Geometry for Self-Supervised Reinforcement Learning</span></h1>
+    <p class="authors">
+      <span><a href="https://www.ias.informatik.tu-darmstadt.de/Team/NicoBohlinger">Nico Bohlinger</a><sup>1</sup></span>
+      <span><a href="https://www.ias.informatik.tu-darmstadt.de/Team/JanPeters">Jan Peters</a><sup>1,2</sup></span>
+    </p>
+    <p class="affiliations"><span><sup>1</sup>Technical University of Darmstadt</span> <span><sup>2</sup>Robotics Institute Germany (RIG), German Research Center for AI (DFKI), hessian.AI</span></p>
+    <div class="links">
+      <a class="btn" id="paper-link" href="#" aria-disabled="true" title="arXiv link coming soon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h9l5 5v15H6z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M14 2v6h6M9 13h8M9 17h8" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Paper <small>(arXiv soon)</small></span></a>
+      <a class="btn" href="https://github.com/nico-bohlinger/chronosrl">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.7 5.4-5.26 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>
+        <span>Code</span></a>
+    </div>
+    <p class="tldr"><strong>A goal that is close in space can be far away in time.</strong> ChronoSRL trains the distances in its critic's embedding space to match the time the agent needs to reach a goal, and predicts from them when the agent arrives and how long it stays. It learns faster and reaches higher performance than <a href="https://arxiv.org/abs/2503.14858">CRL</a>, <a href="https://arxiv.org/abs/2608.30640">AC-CRL</a> and <a href="https://arxiv.org/abs/2605.31273">SRL</a> across network depths, even with much smaller networks.</p>
+  </section>
+
+  <section id="playground" class="section playground" aria-label="Policy playground">
+    <div class="sim">
+      <div class="sim-stage" id="pg-stage">
+        <canvas id="pg-poster" class="sim-poster" aria-hidden="true"></canvas>
+        <div class="sim-status" id="pg-status">Loading the playground…</div>
+      </div>
+      <div class="sim-panel" id="pg-panel" aria-label="Playground controls">
+        <a class="robot-cta" id="robot-cta" href="#robots" aria-label="Try the robot: the Go2 simulation further down">
+          <svg viewBox="0 0 48 32" aria-hidden="true">
+            <g class="far"><path d="M15 16l-2.6 5.6 3.4 5.4M33 16l-2.6 5.6 3.4 5.4"/></g>
+            <rect x="8" y="9.5" width="28" height="8" rx="3.6"/><path d="M34.5 8.2h5.3a3 3 0 0 1 2.9 2.2l.8 3a2 2 0 0 1-1.9 2.6h-7.1z"/>
+            <path class="leg" d="M12 16l-2.6 5.6 3.4 5.4M30 16l-2.6 5.6 3.4 5.4"/>
+            <circle cx="12.8" cy="27" r="1.5"/><circle cx="30.8" cy="27" r="1.5"/></svg>
+          <span>Try the robot</span><i aria-hidden="true">→</i></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="method" class="section">
+    <h2>How ChronoSRL works</h2>
+    <div class="method-body">
+      <figure class="card method-net">
+        <svg viewBox="0 0 360 452" role="img" aria-label="The state and action chunk go through the encoder phi and the goal through the encoder psi into one embedding space, where the distance d between phi of s and a and psi of g approximates kappa tau, and goals that were never reached lie beyond kappa W. The hazard head h and the occupancy head read both embeddings and give Q hazard and Q occ, and the actor pi of a given s and g maximizes Q hazard plus beta Q occ.">
+          <defs>
+            <marker id="net-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1L10 5L0 9z" class="net-head"/></marker>
+            <marker id="net-push" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 1L10 5L0 9z" class="net-push-head"/></marker>
+          </defs>
+          <text class="net-m" x="95" y="20" text-anchor="middle"><tspan class="net-up">(</tspan>s<tspan class="net-up">, </tspan>a<tspan class="net-up">)</tspan></text>
+          <text class="net-m" x="265" y="20" text-anchor="middle">g</text>
+          <path class="net-flow" d="M95 28V41"/>
+          <path class="net-flow" d="M265 28V41"/>
+          <rect class="net-box" x="45" y="44" width="100" height="32" rx="9"/>
+          <rect class="net-box" x="215" y="44" width="100" height="32" rx="9"/>
+          <text class="net-lbl" x="95" y="65" text-anchor="middle">encoder <tspan class="net-m">ϕ</tspan></text>
+          <text class="net-lbl" x="265" y="65" text-anchor="middle">encoder <tspan class="net-m">ψ</tspan></text>
+          <path class="net-flow" d="M95 76V95"/>
+          <path class="net-flow" d="M265 76V95"/>
+          <rect class="net-space" x="22" y="98" width="316" height="166" rx="12"/>
+          <text class="net-cap" x="34" y="116">embedding space</text>
+          <circle class="net-ring" cx="190" cy="182" r="24"/>
+          <circle class="net-ring" cx="190" cy="182" r="46"/>
+          <circle class="net-horizon" cx="190" cy="182" r="68"/>
+          <text class="net-m net-small-m net-halo" aria-hidden="true" x="190" y="119" text-anchor="middle">κW</text><text class="net-m net-small-m" x="190" y="119" text-anchor="middle">κW</text>
+          <path class="net-dist" d="M190 182L152.4 202.7"/>
+          <circle class="net-dot" cx="190" cy="182" r="4.5"/>
+          <circle class="net-dot" cx="148.4" cy="205" r="4.5"/>
+          <text class="net-m net-halo" aria-hidden="true" x="200" y="187">ψ<tspan class="net-up">(</tspan>g<tspan class="net-up">)</tspan></text><text class="net-m" x="200" y="187">ψ<tspan class="net-up">(</tspan>g<tspan class="net-up">)</tspan></text>
+          <text class="net-m net-halo" aria-hidden="true" x="140" y="210" text-anchor="end">ϕ<tspan class="net-up">(</tspan>s<tspan class="net-up">, </tspan>a<tspan class="net-up">)</tspan></text><text class="net-m" x="140" y="210" text-anchor="end">ϕ<tspan class="net-up">(</tspan>s<tspan class="net-up">, </tspan>a<tspan class="net-up">)</tspan></text>
+          <text class="net-m net-accent net-halo" aria-hidden="true" x="146" y="175" text-anchor="middle">d <tspan class="net-up">≈</tspan> κτ</text><text class="net-m net-accent" x="146" y="175" text-anchor="middle">d <tspan class="net-up">≈</tspan> κτ</text>
+          <path class="net-push" d="M242 152L258.6 142.4" marker-end="url(#net-push)"/>
+          <circle class="net-miss" cx="264.5" cy="139" r="4.5"/>
+          <text class="net-cap net-miss-lbl net-halo" aria-hidden="true" x="290" y="125" text-anchor="middle">never reached</text><text class="net-cap net-miss-lbl" x="290" y="125" text-anchor="middle">never reached</text>
+          <text class="net-cap" x="34" y="254"><tspan class="net-m net-small-m">κ</tspan> <tspan class="net-up net-small-m">= −log</tspan> <tspan class="net-m net-small-m">γ</tspan></text>
+          <path class="net-flow" d="M95 264V287"/>
+          <path class="net-flow" d="M265 264V287"/>
+          <rect class="net-box" x="22" y="290" width="146" height="32" rx="9"/>
+          <rect class="net-box" x="192" y="290" width="146" height="32" rx="9"/>
+          <text class="net-lbl" x="95" y="311" text-anchor="middle">hazard head <tspan class="net-m">h</tspan></text>
+          <text class="net-lbl" x="265" y="311" text-anchor="middle">occupancy head</text>
+          <path class="net-flow" d="M95 322V337"/>
+          <path class="net-flow" d="M265 322V337"/>
+          <text class="net-m" x="95" y="355" text-anchor="middle">Q<tspan class="net-sub" dy="3">hazard</tspan></text>
+          <text class="net-m" x="265" y="355" text-anchor="middle">Q<tspan class="net-sub" dy="3">occ</tspan></text>
+          <path class="net-flow" d="M95 364V376H158V389"/>
+          <path class="net-flow" d="M265 364V376H202V389"/>
+          <rect class="net-box net-actor" x="58" y="392" width="244" height="54" rx="11"/>
+          <text class="net-lbl" x="180" y="414" text-anchor="middle">actor <tspan class="net-m">π</tspan><tspan class="net-m"><tspan class="net-up">(</tspan>a<tspan class="net-up"> | </tspan>s<tspan class="net-up">, </tspan>g<tspan class="net-up">)</tspan></tspan></text>
+          <text class="net-lbl net-small" x="180" y="435" text-anchor="middle">maximizes <tspan class="net-m">Q</tspan><tspan class="net-sub" dy="3">hazard</tspan><tspan dy="-3"> + </tspan><tspan class="net-m">βQ</tspan><tspan class="net-sub" dy="3">occ</tspan></text>
+        </svg>
+      </figure>
+      <div class="method-text" id="method-text">
+        <p>ChronoSRL trains the distance between state–action and goal embeddings to match the time the agent takes to reach the goal.</p>
+        <div class="eq tex" data-tex="d(s,a,g)=\lVert\phi(s,a)-\psi(g)\rVert\approx\kappa\tau" data-display="true"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>d</mi><mo stretchy="false">(</mo><mi>s</mi><mo separator="true">,</mo><mi>a</mi><mo separator="true">,</mo><mi>g</mi><mo stretchy="false">)</mo><mo>=</mo><mo stretchy="false">∥</mo><mi>ϕ</mi><mo stretchy="false">(</mo><mi>s</mi><mo separator="true">,</mo><mi>a</mi><mo stretchy="false">)</mo><mo>−</mo><mi>ψ</mi><mo stretchy="false">(</mo><mi>g</mi><mo stretchy="false">)</mo><mo stretchy="false">∥</mo><mo>≈</mo><mi>κ</mi><mi>τ</mi></mrow><annotation encoding="application/x-tex">d(s,a,g)=\lVert\phi(s,a)-\psi(g)\rVert\approx\kappa\tau</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">d</span><span class="mopen">(</span><span class="mord mathnormal">s</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">a</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">g</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">∥</span><span class="mord mathnormal">ϕ</span><span class="mopen">(</span><span class="mord mathnormal">s</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">a</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">ψ</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0359em;">g</span><span class="mclose">)∥</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.4306em;"></span><span class="mord mathnormal">κ</span><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span></span></span></span></span></div>
+        <p>Goals that were never reached are pushed beyond <span class="tex" data-tex="\kappa W"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>κ</mi><mi>W</mi></mrow><annotation encoding="application/x-tex">\kappa W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">κW</span></span></span></span></span>. Two heads on the same embeddings predict when the goal is reached and how long the agent stays there, and the policy maximizes both.</p>
+        <div class="eq tex" data-tex="J(\pi)=\mathbb E\big[Q_{\mathrm{hazard}}+\beta\,Q_{\mathrm{occ}}-\alpha\log\pi\big]" data-display="true"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>J</mi><mo stretchy="false">(</mo><mi>π</mi><mo stretchy="false">)</mo><mo>=</mo><mi mathvariant="double-struck">E</mi><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">[</mo><msub><mi>Q</mi><mrow><mi mathvariant="normal">h</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">z</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">r</mi><mi mathvariant="normal">d</mi></mrow></msub><mo>+</mo><mi>β</mi><mtext> </mtext><msub><mi>Q</mi><mrow><mi mathvariant="normal">o</mi><mi mathvariant="normal">c</mi><mi mathvariant="normal">c</mi></mrow></msub><mo>−</mo><mi>α</mi><mi>log</mi><mo>⁡</mo><mi>π</mi><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">]</mo></mrow><annotation encoding="application/x-tex">J(\pi)=\mathbb E\big[Q_{\mathrm{hazard}}+\beta\,Q_{\mathrm{occ}}-\alpha\log\pi\big]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0962em;">J</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.0359em;">π</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1.2em;vertical-align:-0.35em;"></span><span class="mord mathbb">E</span><span class="mord"><span class="delimsizing size1">[</span></span><span class="mord"><span class="mord mathnormal">Q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">hazard</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0528em;">β</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">Q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">occ</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:1.2em;vertical-align:-0.35em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop">lo<span style="margin-right:0.0139em;">g</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">π</span><span class="mord"><span class="delimsizing size1">]</span></span></span></span></span></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="geometry" class="section">
+    <h2>Distance follows time</h2>
+    <p class="lead">In Ant Hardest Maze, ChronoSRL's distance follows the steps the agent still needs more closely than the distance in space, and a critic without the geometric losses hardly follows them.</p>
+    <div class="card">
+      <div class="toolbar"><div id="maze-measure"></div></div>
+      <div class="maps" id="maze-maps"><div class="skeleton"></div></div>
+    </div>
+  </section>
+
+  <section id="results" class="section">
+    <h2>Faster across network depths</h2>
+    <p class="lead">The comparison covers seven tasks, four methods and network depths from 1 to 64.</p>
+    <div class="card">
+      <div class="toolbar">
+        <div class="seg" role="radiogroup" aria-label="Statistic" id="depth-stat">
+          <button role="radio" aria-checked="true" data-stat="auc">Learning speed (AUC)</button>
+          <button role="radio" aria-checked="false" data-stat="final">Final performance</button>
+        </div>
+        <div class="legend" id="method-legend"></div>
+      </div>
+      <div class="charts" id="depth-grid"><div class="skeleton"></div></div>
+    </div>
+    <div class="card curve-card" id="curve-card">
+      <button type="button" class="curve-cta" id="curve-cta" aria-controls="curve-body" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19.5h18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4.5 16.5l4.2-5.2 3.6 3 6.8-8.3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="19.1" cy="6" r="1.9" fill="currentColor"/></svg>
+        <span id="curve-cta-text">Click a point above to see its training curves</span>
+      </button>
+      <div class="curve-body" id="curve-body">
+        <div class="curve-inner">
+          <div class="toolbar">
+            <label class="select"><span>Task</span><select id="curve-task"></select></label>
+            <div class="seg small" role="radiogroup" aria-label="Depth" id="curve-depth"></div>
+            <label class="check"><input type="checkbox" id="curve-seeds"> seeds</label>
+          </div>
+          <div id="curve-plot"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="robots" class="section">
+    <h2>Toward self-supervised robot locomotion</h2>
+    <p class="lead">The Unitree Go2 learns velocity tracking, goal-position reaching and box climbing in a sim-to-real locomotion setup.</p>
+    <div class="sim go2">
+      <div class="sim-stage" id="go2-stage"><div class="sim-status" id="go2-status">The Go2 loads when visible</div></div>
+      <div class="sim-panel" id="go2-panel" aria-label="Go2 controls"></div>
+    </div>
+    <div class="card">
+      <div class="charts" id="robot-plots"><div class="skeleton"></div></div>
+    </div>
+  </section>
+
+  <section id="bibtex" class="section">
+    <h2>BibTeX</h2>
+    <div class="bib card">
+      <button class="copy" id="bib-copy" type="button">Copy</button>
+<pre id="bib-text">@article{bohlinger2026chronosrl,
+  title   = {ChronoSRL: Temporal Geometry for Self-Supervised Reinforcement Learning},
+  author  = {Bohlinger, Nico and Peters, Jan},
+  journal = {arXiv preprint},
+  year    = {2026}
+}</pre>
+    </div>
+  </section>
+</main>
+</body>
+</html>
