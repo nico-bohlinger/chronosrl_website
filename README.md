@@ -1,6 +1,6 @@
 # ChronoSRL: Temporal Geometry for Self-Supervised Reinforcement Learning
 
-│ [Website](https://nico-bohlinger.github.io/chronosrl_website) │ [Paper]() │ [Code](https://github.com/nico-bohlinger/chronosrl) │
+│ [Website](https://nico-bohlinger.github.io/chronosrl_website) │ [Paper](https://arxiv.org/pdf/2609.36238) │ [Code](https://github.com/nico-bohlinger/chronosrl) │
 
 Project page of ChronoSRL. The final policies run in the browser, on the seven JaxGCRL tasks in a JavaScript port of brax's spring physics and on the Unitree Go2 in MuJoCo compiled to WebAssembly, next to the results of the paper.
 
